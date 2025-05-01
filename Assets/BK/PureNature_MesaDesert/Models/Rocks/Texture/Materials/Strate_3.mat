@@ -26,15 +26,15 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BumpMap:
-        m_Texture: {fileID: 2800000, guid: af692c616d944080a1b18dc5926a7c0e, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2bb02a34ece321141a262a8dfa411a9c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 9984f2f7745848ebb657db50b1e1393b, type: 3}
+        m_Texture: {fileID: 2800000, guid: 04da8fd2ad1fe304795392b3c9c9a0e1, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
-        m_Texture: {fileID: 2800000, guid: 6009d2a3c6864d9d8e90c7559f055119, type: 3}
+        m_Texture: {fileID: 2800000, guid: 8095478bc9ddb464e90bb5a0c92b6529, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
@@ -42,3 +42,4 @@ Material:
     - _QueueControl: 0
     m_Colors: []
   m_BuildTextureStacks: []
+  m_AllowLocking: 1

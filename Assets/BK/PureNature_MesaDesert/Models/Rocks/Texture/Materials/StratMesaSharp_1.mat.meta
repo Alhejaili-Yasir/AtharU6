@@ -2,14 +2,7 @@ fileFormatVersion: 2
 guid: dfec6744eebc4e298abbfce0541f970c
 NativeFormatImporter:
   externalObjects: {}
-  mainObjectFileID: 2100000
+  mainObjectFileID: 0
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 317263
-  packageName: 'Pure Nature 2 : Mesa Desert'
-  packageVersion: 1.0
-  assetPath: Assets/BK/PureNature_MesaDesert/Models/Rocks/Textures/Materials/StratMesaSharp_1.mat
-  uploadId: 748949

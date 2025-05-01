@@ -2,14 +2,7 @@ fileFormatVersion: 2
 guid: d5541f61ecec4c1b8918157031c2c394
 NativeFormatImporter:
   externalObjects: {}
-  mainObjectFileID: 2100000
+  mainObjectFileID: 0
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 317263
-  packageName: 'Pure Nature 2 : Mesa Desert'
-  packageVersion: 1.0
-  assetPath: Assets/BK/PureNature_MesaDesert/Models/Rocks/Textures/Materials/BigMesa_5.mat
-  uploadId: 748949
