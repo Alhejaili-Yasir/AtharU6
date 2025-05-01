@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 0671c8c23c1a4abe9bcd6ebe5b6e0a1b
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 15600000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 317263
+  packageName: 'Pure Nature 2 : Mesa Desert'
+  packageVersion: 1.0
+  assetPath: Assets/BK/PureNature_MesaDesert/Models/Terrains/Terrain_Mesa.asset
+  uploadId: 748949
