@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f7a874427c8d8294bb85e72423394668
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 317263
+  packageName: 'Pure Nature 2 : Mesa Desert'
+  packageVersion: 1.0
+  assetPath: Assets/BK/PureNature_MesaDesert/Settings/Mesa_PostProcess.asset
+  uploadId: 748949

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 782c444c94fe43ee8e4e31e3d7fc7e20
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 8574412962073106934
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 317263
+  packageName: 'Pure Nature 2 : Mesa Desert'
+  packageVersion: 1.0
+  assetPath: Assets/BK/PureNature_MesaDesert/Textures/Surfaces/Layers/SandFine.terrainlayer
+  uploadId: 748949

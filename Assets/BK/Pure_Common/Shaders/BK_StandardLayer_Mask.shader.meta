@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 7b61ba13111c27c49bf11f4ff140e83f
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 317263
+  packageName: 'Pure Nature 2 : Mesa Desert'
+  packageVersion: 1.0
+  assetPath: Assets/BK/Pure_Common/Shaders/BK_StandardLayer_Mask.shader
+  uploadId: 748949
