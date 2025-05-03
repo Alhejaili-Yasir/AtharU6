@@ -27,7 +27,7 @@ public class InventorySystem : MonoBehaviour
             items[itemName] = 1;
         }
 
-        Debug.Log($"تمت إضافة: {itemName} (العدد: {items[itemName]})");
+        Debug.Log($"Add  : {itemName} (NUM: {items[itemName]})");
     }
 
     public void RemoveItem(string itemName)
