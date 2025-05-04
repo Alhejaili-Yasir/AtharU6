@@ -2,34 +2,52 @@ using UnityEngine;
 
 public class HomingFireball : MonoBehaviour
 {
-    public float speed = 0.2f;
-    public float rotateSpeed = 15f;
-    public GameObject explosionEffect;
+    public float initialSpeed = 6f;
+    public float homingSpeed = 8f;
+    public float rotateSpeed = 10f;
+    public float delayBeforeHoming = 0.6f;
+    public float randomAngleRange = 25f; // الزاوية العشوائية
     public float damage = 10f;
+    public GameObject explosionEffect;
 
+    private Rigidbody rb;
     private Transform target;
+    private bool isHoming = false;
 
     void Start()
     {
-        target = GameObject.FindGameObjectWithTag("Player").transform;
+        rb = GetComponent<Rigidbody>();
+        rb.useGravity = false;
 
-        Rigidbody rb = GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.useGravity = false;
-        }
+        target = GameObject.FindGameObjectWithTag("Player")?.transform;
+
+        // 🔀 أضف زاوية انحراف عشوائية حول المحور Y و X
+        Quaternion randomRotation = Quaternion.Euler(
+            Random.Range(-randomAngleRange, randomAngleRange),
+            Random.Range(-randomAngleRange, randomAngleRange),
+            0f
+        );
+
+        Vector3 launchDir = randomRotation * transform.forward;
+        rb.linearVelocity = launchDir * initialSpeed;
+
+        Invoke(nameof(StartHoming), delayBeforeHoming);
     }
 
-    void Update()
+    void StartHoming()
     {
-        if (target == null) return;
+        isHoming = true;
+    }
 
-        Vector3 dir = target.position - transform.position;
-        dir.Normalize();
+    void FixedUpdate()
+    {
+        if (!isHoming || target == null) return;
 
-        Vector3 rotateAmount = Vector3.Cross(transform.forward, dir);
-        GetComponent<Rigidbody>().angularVelocity = rotateAmount * rotateSpeed;
-        GetComponent<Rigidbody>().linearVelocity = transform.forward * speed;
+        Vector3 direction = (target.position - transform.position).normalized;
+        Vector3 newDir = Vector3.RotateTowards(transform.forward, direction, rotateSpeed * Time.fixedDeltaTime, 0f);
+
+        rb.linearVelocity = newDir * homingSpeed;
+        transform.rotation = Quaternion.LookRotation(newDir);
     }
 
     void OnTriggerEnter(Collider other)
@@ -42,10 +60,10 @@ public class HomingFireball : MonoBehaviour
 
         if (other.CompareTag("Player"))
         {
-            Debug.Log("اللاعب أُصيب!");
-            Destroy(gameObject);
+            Debug.Log("🎯 اللاعب أُصيب!");
+            // أضف ضرر هنا إذا فيه سكربت صحة
         }
 
-        
+        Destroy(gameObject);
     }
 }

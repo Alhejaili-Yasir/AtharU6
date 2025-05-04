@@ -149,7 +149,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 39318b77f47293047bacb5937e02467a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 5
-  rotateSpeed: 200
-  explosionEffect: {fileID: 0}
+  initialSpeed: 10
+  homingSpeed: 8
+  rotateSpeed: 15
+  delayBeforeHoming: 1
+  randomAngleRange: 35
   damage: 10
+  explosionEffect: {fileID: 0}
