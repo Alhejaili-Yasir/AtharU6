@@ -1,11 +1,12 @@
 ﻿using UnityEngine;
+using System.Collections;
 
 public class PlayerAttack : MonoBehaviour
 {
     public Animator animator;
-    public MonoBehaviour movementScript; // اسحب سكربت الحركة هنا
-
-    public float attackDuration = 0.6f; // مدة أنميشن الضرب
+    public MonoBehaviour movementScript;
+    public GameObject activeObject;       // 👈 الأوبجكت اللي تبي يظهر
+    public float attackDuration = 0.6f;   // ⏱️ نفس مدة أنميشن الضرب
 
     void Update()
     {
@@ -17,16 +18,19 @@ public class PlayerAttack : MonoBehaviour
             if (!isInAir && !isCrouching)
             {
                 animator.SetBool("attack", true);
-                movementScript.enabled = false; // 🔒 وقف الحركة
+                movementScript.enabled = false;
+                activeObject.SetActive(true);  // ✅ فعل الأوبجكت
+
                 StartCoroutine(ResetAttack());
             }
         }
     }
 
-    System.Collections.IEnumerator ResetAttack()
+    IEnumerator ResetAttack()
     {
-        yield return new WaitForSeconds(attackDuration); // ⏳ نفس مدة الأنميشن
+        yield return new WaitForSeconds(attackDuration);
         animator.SetBool("attack", false);
-        movementScript.enabled = true; // 🔓 شغل الحركة
+        movementScript.enabled = true;
+        activeObject.SetActive(false);   // ⛔ رجع الأوبجكت غير مفعل
     }
 }

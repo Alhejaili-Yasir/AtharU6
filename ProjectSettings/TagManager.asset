@@ -7,6 +7,8 @@ TagManager:
   - Enemy
   - Fireball
   - DontDestroyOnLoad
+  - player melle
+  - player melee
   layers:
   - Default
   - TransparentFX
