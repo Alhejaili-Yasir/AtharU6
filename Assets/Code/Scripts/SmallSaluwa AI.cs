@@ -10,6 +10,10 @@ public class SaluwaAI : MonoBehaviour
     public float attackRange = 2f;
     public float walkRadius = 6f;
 
+    [Header("Roam Limit")]
+    public Transform roamCenter;    // المركز
+    public float roamLimit = 12f;   // أقصى مدى للحركة
+
     private NavMeshAgent agent;
     private Vector3 walkTarget;
     private bool isAttacking = false;
@@ -120,6 +124,8 @@ public class SaluwaAI : MonoBehaviour
 
     void PickNewWalkTarget()
     {
+        Vector3 center = roamCenter != null ? roamCenter.position : transform.position;
+
         float minDistance = walkRadius * 0.7f;
         int attempts = 0;
 
@@ -127,9 +133,10 @@ public class SaluwaAI : MonoBehaviour
         {
             Vector3 randomDir = Random.insideUnitSphere * walkRadius;
             randomDir.y = 0;
-            Vector3 candidate = transform.position + randomDir;
+            Vector3 candidate = center + randomDir;
 
-            if (Vector3.Distance(transform.position, candidate) >= minDistance)
+            if (Vector3.Distance(center, candidate) <= roamLimit &&
+                Vector3.Distance(transform.position, candidate) >= minDistance)
             {
                 NavMeshHit hit;
                 if (NavMesh.SamplePosition(candidate, out hit, 1.5f, NavMesh.AllAreas))
@@ -164,5 +171,11 @@ public class SaluwaAI : MonoBehaviour
 
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, walkRadius);
+
+        if (roamCenter != null)
+        {
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireSphere(roamCenter.position, roamLimit);
+        }
     }
 }

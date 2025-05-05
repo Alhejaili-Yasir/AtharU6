@@ -12,6 +12,10 @@ public class BigSaluwaAI : MonoBehaviour
     public float walkSpeed = 3.5f;
     public float runSpeed = 6f;
 
+    [Header("Roam Limit")]
+    public Transform roamCenter;       // ✳️ نقطة المركز
+    public float roamLimit = 20f;      // ✳️ الحد الأقصى للخروج
+
     private NavMeshAgent agent;
     private Vector3 patrolTarget;
     private bool isAttacking = false;
@@ -74,7 +78,6 @@ public class BigSaluwaAI : MonoBehaviour
             agent.SetDestination(patrolTarget);
 
             bool isMoving = agent.velocity.magnitude > 0.1f;
-
             animator.SetBool("isWalking", isMoving);
             animator.SetBool("isRunning", false);
             animator.SetBool("isAttacking", false);
@@ -99,12 +102,25 @@ public class BigSaluwaAI : MonoBehaviour
 
     void PickNewPatrolTarget()
     {
-        Vector3 randomDir = Random.insideUnitSphere * patrolRadius + transform.position;
-        NavMeshHit hit;
-        if (NavMesh.SamplePosition(randomDir, out hit, patrolRadius, NavMesh.AllAreas))
+        Vector3 center = roamCenter != null ? roamCenter.position : transform.position;
+
+        for (int i = 0; i < 10; i++)
         {
-            patrolTarget = hit.position;
+            Vector3 randomDir = Random.insideUnitSphere * patrolRadius;
+            randomDir.y = 0;
+            Vector3 candidate = center + randomDir;
+
+            if (Vector3.Distance(center, candidate) <= roamLimit)
+            {
+                if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 1.5f, NavMesh.AllAreas))
+                {
+                    patrolTarget = hit.position;
+                    return;
+                }
+            }
         }
+
+        patrolTarget = transform.position; // fallback
     }
 
     void OnDrawGizmosSelected()
@@ -117,5 +133,11 @@ public class BigSaluwaAI : MonoBehaviour
 
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, patrolRadius);
+
+        if (roamCenter != null)
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(roamCenter.position, roamLimit);
+        }
     }
 }
