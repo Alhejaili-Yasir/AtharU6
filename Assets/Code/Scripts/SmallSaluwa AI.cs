@@ -8,16 +8,17 @@ public class SaluwaAI : MonoBehaviour
     public Transform player;
     public float detectRange = 10f;
     public float attackRange = 2f;
-    public float walkRadius = 5f;
+    public float walkRadius = 6f;
 
     private NavMeshAgent agent;
     private Vector3 walkTarget;
     private bool isAttacking = false;
+    private Coroutine roamRoutine;
 
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
-        PickNewWalkTarget();
+        roamRoutine = StartCoroutine(RoamLoop());
     }
 
     void Update()
@@ -37,26 +38,52 @@ public class SaluwaAI : MonoBehaviour
 
         if (distance <= attackRange)
         {
+            StopRoaming();
             agent.SetDestination(transform.position);
-            animator.SetBool("isRunning", false);
-            animator.SetBool("isWalking", false);
+            SetAnim(false, false, true);
             StartCoroutine(AttackLoop());
         }
         else if (distance <= detectRange)
         {
+            StopRoaming();
             agent.SetDestination(player.position);
-            animator.SetBool("isRunning", true);
-            animator.SetBool("isWalking", false);
+            SetAnim(false, true, false);
         }
         else
         {
-            if (Vector3.Distance(transform.position, walkTarget) < 1f)
+            if (roamRoutine == null)
             {
-                PickNewWalkTarget();
+                roamRoutine = StartCoroutine(RoamLoop());
             }
+        }
+    }
+
+    IEnumerator RoamLoop()
+    {
+        while (true)
+        {
+            if (isAttacking) yield break;
+
+            PickNewWalkTarget();
             agent.SetDestination(walkTarget);
-            animator.SetBool("isWalking", true);
-            animator.SetBool("isRunning", false);
+
+            float walkTime = Random.Range(5f, 8f);
+            float walkTimer = 0f;
+
+            while (walkTimer < walkTime)
+            {
+                if (isAttacking || PlayerInRange()) yield break;
+
+                SetAnim(true, false, false);
+                walkTimer += Time.deltaTime;
+                yield return null;
+            }
+
+            agent.SetDestination(transform.position);
+            SetAnim(false, false, false);
+
+            float waitTime = Random.Range(1.5f, 2f);
+            yield return new WaitForSeconds(waitTime);
         }
     }
 
@@ -77,15 +104,54 @@ public class SaluwaAI : MonoBehaviour
         animator.SetBool("isAttacking", false);
     }
 
+    void StopRoaming()
+    {
+        if (roamRoutine != null)
+        {
+            StopCoroutine(roamRoutine);
+            roamRoutine = null;
+        }
+    }
+
+    bool PlayerInRange()
+    {
+        return Vector3.Distance(transform.position, player.position) <= detectRange;
+    }
+
     void PickNewWalkTarget()
     {
-        Vector3 randomDir = Random.insideUnitSphere * walkRadius;
-        randomDir += transform.position;
-        NavMeshHit hit;
-        if (NavMesh.SamplePosition(randomDir, out hit, walkRadius, NavMesh.AllAreas))
+        float minDistance = walkRadius * 0.7f;
+        int attempts = 0;
+
+        while (attempts < 10)
         {
-            walkTarget = hit.position;
+            Vector3 randomDir = Random.insideUnitSphere * walkRadius;
+            randomDir.y = 0;
+            Vector3 candidate = transform.position + randomDir;
+
+            if (Vector3.Distance(transform.position, candidate) >= minDistance)
+            {
+                NavMeshHit hit;
+                if (NavMesh.SamplePosition(candidate, out hit, 1.5f, NavMesh.AllAreas))
+                {
+                    walkTarget = hit.position;
+                    return;
+                }
+            }
+
+            attempts++;
         }
+
+        walkTarget = transform.position;
+    }
+
+    void SetAnim(bool walk, bool run, bool attack)
+    {
+        bool isMoving = agent.velocity.magnitude > 0.1f;
+
+        animator.SetBool("isWalking", walk && isMoving);
+        animator.SetBool("isRunning", run && isMoving);
+        animator.SetBool("isAttacking", attack);
     }
 
     void OnDrawGizmosSelected()
