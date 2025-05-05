@@ -9,6 +9,8 @@ TagManager:
   - DontDestroyOnLoad
   - player melle
   - player melee
+  - Reflect
+  - Fanos
   layers:
   - Default
   - TransparentFX

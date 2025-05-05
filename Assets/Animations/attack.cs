@@ -1,36 +1,48 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class PlayerAttack : MonoBehaviour
+public class PlayerDualAttack : MonoBehaviour
 {
     public Animator animator;
     public MonoBehaviour movementScript;
-    public GameObject activeObject;       // 👈 الأوبجكت اللي تبي يظهر
-    public float attackDuration = 0.6f;   // ⏱️ نفس مدة أنميشن الضرب
+
+    [Header("Q Attack Settings")]
+    public GameObject qActiveObject;
+    public float qAttackDuration = 0.6f;
+
+    [Header("R Attack Settings")]
+    public GameObject rActiveObject;
+    public float rAttackDuration = 0.6f;
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Q))
+        bool isInAir = animator.GetBool("air");
+        bool isCrouching = animator.GetBool("crouch");
+
+        if (!isInAir && !isCrouching)
         {
-            bool isInAir = animator.GetBool("air");
-            bool isCrouching = animator.GetBool("crouch");
-
-            if (!isInAir && !isCrouching)
+            if (Input.GetKeyDown(KeyCode.Q))
             {
-                animator.SetBool("attack", true);
-                movementScript.enabled = false;
-                activeObject.SetActive(true);  // ✅ فعل الأوبجكت
+                StartCoroutine(PerformAttack(qActiveObject, qAttackDuration));
+            }
 
-                StartCoroutine(ResetAttack());
+            if (Input.GetKeyDown(KeyCode.R))
+            {
+                StartCoroutine(PerformAttack(rActiveObject, rAttackDuration));
             }
         }
     }
 
-    IEnumerator ResetAttack()
+    IEnumerator PerformAttack(GameObject obj, float duration)
     {
-        yield return new WaitForSeconds(attackDuration);
+        animator.SetBool("attack", true);
+        movementScript.enabled = false;
+        if (obj != null) obj.SetActive(true);
+
+        yield return new WaitForSeconds(duration);
+
         animator.SetBool("attack", false);
         movementScript.enabled = true;
-        activeObject.SetActive(false);   // ⛔ رجع الأوبجكت غير مفعل
+        if (obj != null) obj.SetActive(false);
     }
 }
