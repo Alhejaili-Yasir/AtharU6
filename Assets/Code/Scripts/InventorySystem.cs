@@ -50,4 +50,15 @@ public class InventorySystem : MonoBehaviour
     {
         return items.ContainsKey(itemName) ? items[itemName] : 0;
     }
+    public void RemoveItems(string itemName, int count)
+{
+    if (items.ContainsKey(itemName))
+    {
+        items[itemName] -= count;
+        if (items[itemName] <= 0)
+            items.Remove(itemName);
+    }
+}
+
+
 }

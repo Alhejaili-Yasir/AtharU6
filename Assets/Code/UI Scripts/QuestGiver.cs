@@ -3,46 +3,42 @@ using TMPro;
 
 public class QuestGiver : MonoBehaviour
 {
+    public int questIndex;
     public GameObject questPanel;
     public TextMeshProUGUI questText;
-    public string requiredItem = "Meat";
-    public int requiredAmount =5;
-    public int rewardMoney = 100;
 
     private bool playerInRange = false;
-    private bool questGiven = false;
-    private bool questCompleted = false;
 
     void Update()
     {
         if (playerInRange && Input.GetKeyDown(KeyCode.E))
         {
-            if (!questGiven)
+            Quest currentQuest = QuestManager.Instance.GetCurrentQuest();
+
+            if (QuestManager.Instance.currentQuestIndex != questIndex)
             {
                 questPanel.SetActive(true);
-                questText.text = $"Collect {requiredAmount} of {requiredItem}.";
-                questGiven = true;
-            }
-            else if (questGiven && !questCompleted)
-            {
-                int current = InventorySystem.Instance.GetItemCount(requiredItem);
 
-                if (current >= requiredAmount)
+                if (questIndex - 1 >= 0 && questIndex - 1 < QuestManager.Instance.quests.Count)
                 {
-                    InventorySystem.Instance.RemoveItem(requiredItem); 
-                    for (int i = 1; i < requiredAmount; i++)
-                        InventorySystem.Instance.RemoveItem(requiredItem);
-
-                    PlayerStats.Instance.AddGold(rewardMoney);
-
-                    questText.text = $"Well done! You earned {rewardMoney} Money.";
-                    questCompleted = true;
+                    questText.text = $"Finish the previous quest: {QuestManager.Instance.quests[questIndex - 1].questName}";
                 }
                 else
                 {
-                    int remaining = requiredAmount - current;
-                    questText.text = $"You still need {remaining} of {requiredItem}.";
+                    questText.text = "This quest is not available yet.";
                 }
+
+                return;
+            }
+
+            if (!currentQuest.isCompleted)
+            {
+                questPanel.SetActive(true);
+                questText.text = $"Collect {currentQuest.requiredAmount} of {currentQuest.requiredItem}.";
+            }
+            else
+            {
+                questText.text = $"Well done! You earned {currentQuest.rewardMoney} money.";
             }
         }
 
@@ -55,9 +51,7 @@ public class QuestGiver : MonoBehaviour
     void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
-        {
             playerInRange = true;
-        }
     }
 
     void OnTriggerExit(Collider other)
