@@ -1,17 +1,41 @@
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
+using System.Text;
 
 public class InventoryUI : MonoBehaviour
 {
     public TextMeshProUGUI inventoryText;
+    public TextMeshProUGUI moneyText;
+    public float updateInterval = 0.5f;
 
-    void Update()
+    void Start()
     {
-        inventoryText.text = "Inventory:\\n";
+        InvokeRepeating(nameof(UpdateUI), 0f, updateInterval);
+    }
 
-        foreach (var item in InventorySystem.Instance.items)
+    void UpdateUI()
+    {
+        if (QuestManager.Instance == null)
+            return;
+
+        // ✅ تحديث الفلوس
+        if (moneyText != null)
         {
-            inventoryText.text += $"- {item.Key} � {item.Value}\\n";
+            moneyText.text = $"💰 Money: {QuestManager.Instance.playerMoney}";
+        }
+
+        // ✅ تحديث العناصر
+        if (inventoryText != null)
+        {
+            var items = QuestManager.Instance.GetAllCollectedItems();
+            StringBuilder sb = new StringBuilder();
+
+            foreach (var entry in items)
+            {
+                sb.AppendLine($"📦 {entry.Key}: {entry.Value}");
+            }
+
+            inventoryText.text = sb.ToString();
         }
     }
 }

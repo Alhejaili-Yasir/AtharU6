@@ -2,17 +2,16 @@
 
 public class CollectibleItem : MonoBehaviour
 {
-    public string itemName = "عنصر بدون اسم";
+    public string itemName = "Unnamed Item";
     public float pickupRange = 2f;
+    public GameObject promptUI; // 👈 UI يظهر فوق العنصر عند الاقتراب
 
     private Transform player;
-    public GameObject promptUI; // 👈 النص العلوي (يتم ربطه من Inspector)
 
     void Start()
     {
-        player = GameObject.FindGameObjectWithTag("Player").transform;
+        player = GameObject.FindGameObjectWithTag("Player")?.transform;
 
-        // نخفي النص في البداية
         if (promptUI != null)
             promptUI.SetActive(false);
     }
@@ -30,8 +29,11 @@ public class CollectibleItem : MonoBehaviour
 
             if (Input.GetKeyDown(KeyCode.E))
             {
-                InventorySystem.Instance.AddItem(itemName);
-                Destroy(gameObject); // نخفي العنصر
+                // ✅ أضف العنصر لنظام المهام المدمج مع الإنفنتوري
+                QuestManager.Instance.AddItem(itemName);
+
+                // ✅ إزالة العنصر من العالم
+                Destroy(gameObject);
             }
         }
         else
