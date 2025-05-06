@@ -1,31 +1,37 @@
 ﻿using UnityEngine;
 
-public class ObjectivePointer : MonoBehaviour
+public class ArrowTargetController : MonoBehaviour
 {
-    [Header("المكان الذي يشير إليه السهم")]
-    public Transform target; // هدف المهمة الحالي
+    public Transform player;                // اللاعب
+    public Transform currentTarget;         // الهدف الحالي
+    public GameObject arrowObject;          // السهم الذي يشير
 
-    [Header("الشيء الذي سيحمل السهم - مثلاً فوق رأس اللاعب")]
-    public Transform player;
+    private bool isActive = true;
 
     void Update()
     {
-        if (target == null || player == null)
-            return;
+        if (!isActive || currentTarget == null || player == null) return;
 
-        // احسب الاتجاه من اللاعب إلى الهدف
-        Vector3 direction = target.position - player.position;
-        direction.y = 0f; // تجاهل الفرق في الارتفاع
+        Vector3 direction = currentTarget.position - player.position;
+        direction.y = 0f;
 
-        // إذا فيه اتجاه واضح
         if (direction.sqrMagnitude > 0.01f)
         {
-            Quaternion lookRotation = Quaternion.LookRotation(direction);
-            transform.rotation = lookRotation;
+            Quaternion rotation = Quaternion.LookRotation(direction);
+            transform.rotation = rotation;
         }
+    }
 
-        // اجعل السهم دائمًا فوق اللاعب
-        Vector3 newPos = player.position + new Vector3(0, 2f, 0); // ارفع السهم فوقه قليلاً
-        transform.position = newPos;
+    public void SetTarget(Transform newTarget)
+    {
+        currentTarget = newTarget;
+        SetArrowActive(true);
+    }
+
+    public void SetArrowActive(bool value)
+    {
+        isActive = value;
+        if (arrowObject != null)
+            arrowObject.SetActive(value);
     }
 }

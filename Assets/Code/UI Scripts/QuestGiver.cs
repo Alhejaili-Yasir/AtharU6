@@ -54,8 +54,9 @@ public class QuestGiver : MonoBehaviour
         {
             hasInteracted = true;
 
-            // حوار تمهيدي
-            if (!questGiven && dialogueLines.Count > 0 && dialogueIndex < dialogueLines.Count)
+            // ✅ عرض الديالوق فقط إذا كانت المهمة الحالية
+            if (!questGiven && dialogueLines.Count > 0 && dialogueIndex < dialogueLines.Count
+                && questIndex == QuestManager.Instance.currentQuestIndex)
             {
                 if (!showingDialogue)
                     showingDialogue = true;
@@ -79,7 +80,7 @@ public class QuestGiver : MonoBehaviour
 
             Quest currentQuest = QuestManager.Instance.GetCurrentQuest();
 
-            // المهمة منتهية سابقًا
+            // ✅ المهمة قديمة (تم إنهاؤها)
             if (questIndex < QuestManager.Instance.currentQuestIndex)
             {
                 questPanel.SetActive(true);
@@ -88,7 +89,7 @@ public class QuestGiver : MonoBehaviour
                 return;
             }
 
-            // لم يتم الوصول للمهمة بعد
+            // ❌ لم يتم الوصول لهذه المهمة بعد
             if (questIndex > QuestManager.Instance.currentQuestIndex)
             {
                 questPanel.SetActive(true);
@@ -105,7 +106,7 @@ public class QuestGiver : MonoBehaviour
                 return;
             }
 
-            // إعطاء المهمة لأول مرة
+            // 📜 إعطاء المهمة لأول مرة
             if (!questGiven)
             {
                 questPanel.SetActive(true);
@@ -115,7 +116,7 @@ public class QuestGiver : MonoBehaviour
                 return;
             }
 
-            // التقدم بالمهمة
+            // 🔄 متابعة التقدم بالمهمة
             if (!currentQuest.isCompleted)
             {
                 int collected = QuestManager.Instance.GetCollectedAmount(currentQuest.requiredItem);
@@ -133,7 +134,7 @@ public class QuestGiver : MonoBehaviour
                     currentQuest.isCompleted = true;
                     QuestManager.Instance.RemoveItem(currentQuest.requiredItem, currentQuest.requiredAmount);
                     QuestManager.Instance.AddMoney(currentQuest.rewardMoney);
-                    QuestManager.Instance.MoveToNextQuest();
+                    QuestManager.Instance.MoveToNextQuest(); // ✅ هذا اللي يخلي السهم يتحرك للهدف التالي
 
                     questText.text = $"✅ Quest completed! You earned {currentQuest.rewardMoney} coins.";
                     PlayVoice(onQuestCompletedVoice);

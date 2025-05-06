@@ -11,6 +11,9 @@ public class Quest
     public bool isCompleted = false;
 }
 
+
+
+
 public class QuestManager : MonoBehaviour
 {
     public static QuestManager Instance;
