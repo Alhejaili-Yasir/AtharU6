@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using TMPro;
+using System.Collections.Generic;
 
 public class QuestGiver : MonoBehaviour
 {
@@ -12,19 +13,38 @@ public class QuestGiver : MonoBehaviour
     public string idleText = "Hello there!";
     public string talkHint = "Click E to talk";
 
+    [TextArea(2, 5)]
+    public List<string> dialogueLines = new List<string>();
+    public List<AudioClip> dialogueVoices = new List<AudioClip>();
+
+    [Header("Voice Lines")]
+    public AudioClip onQuestAcceptedVoice;
+    public AudioClip onQuestProgressVoice;
+    public AudioClip onQuestCompletedVoice;
+    public AudioClip onQuestAlreadyDoneVoice;
+
+    private AudioSource audioSource;
+
     private bool playerInRange = false;
     private bool questGiven = false;
     private bool hasInteracted = false;
+
+    private int dialogueIndex = 0;
+    private bool showingDialogue = false;
 
     void Start()
     {
         if (floatingText != null)
             floatingText.text = idleText;
+
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
     }
 
     void Update()
     {
-        if (playerInRange && floatingText != null && !hasInteracted)
+        if (playerInRange && floatingText != null && !hasInteracted && !showingDialogue)
             floatingText.text = talkHint;
 
         if (!playerInRange && floatingText != null)
@@ -34,15 +54,41 @@ public class QuestGiver : MonoBehaviour
         {
             hasInteracted = true;
 
+            // حوار تمهيدي
+            if (!questGiven && dialogueLines.Count > 0 && dialogueIndex < dialogueLines.Count)
+            {
+                if (!showingDialogue)
+                    showingDialogue = true;
+
+                questPanel.SetActive(true);
+                questText.text = dialogueLines[dialogueIndex];
+
+                if (dialogueIndex < dialogueVoices.Count && dialogueVoices[dialogueIndex] != null)
+                {
+                    audioSource.Stop();
+                    audioSource.PlayOneShot(dialogueVoices[dialogueIndex]);
+                }
+
+                dialogueIndex++;
+
+                if (dialogueIndex >= dialogueLines.Count)
+                    showingDialogue = false;
+
+                return;
+            }
+
             Quest currentQuest = QuestManager.Instance.GetCurrentQuest();
 
+            // المهمة منتهية سابقًا
             if (questIndex < QuestManager.Instance.currentQuestIndex)
             {
                 questPanel.SetActive(true);
                 questText.text = "✅ You already completed this quest.";
+                PlayVoice(onQuestAlreadyDoneVoice);
                 return;
             }
 
+            // لم يتم الوصول للمهمة بعد
             if (questIndex > QuestManager.Instance.currentQuestIndex)
             {
                 questPanel.SetActive(true);
@@ -59,14 +105,17 @@ public class QuestGiver : MonoBehaviour
                 return;
             }
 
+            // إعطاء المهمة لأول مرة
             if (!questGiven)
             {
                 questPanel.SetActive(true);
                 questText.text = $"📜 Quest: Collect {currentQuest.requiredAmount} of {currentQuest.requiredItem}.";
                 questGiven = true;
+                PlayVoice(onQuestAcceptedVoice);
                 return;
             }
 
+            // التقدم بالمهمة
             if (!currentQuest.isCompleted)
             {
                 int collected = QuestManager.Instance.GetCollectedAmount(currentQuest.requiredItem);
@@ -77,6 +126,7 @@ public class QuestGiver : MonoBehaviour
                 if (remaining > 0)
                 {
                     questText.text = $"📦 You still need {remaining} more {currentQuest.requiredItem}.";
+                    PlayVoice(onQuestProgressVoice);
                 }
                 else
                 {
@@ -86,12 +136,14 @@ public class QuestGiver : MonoBehaviour
                     QuestManager.Instance.MoveToNextQuest();
 
                     questText.text = $"✅ Quest completed! You earned {currentQuest.rewardMoney} coins.";
+                    PlayVoice(onQuestCompletedVoice);
                 }
             }
             else
             {
                 questPanel.SetActive(true);
                 questText.text = "✅ You already completed this quest.";
+                PlayVoice(onQuestAlreadyDoneVoice);
             }
         }
 
@@ -106,7 +158,9 @@ public class QuestGiver : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerInRange = true;
-            hasInteracted = false; // ✅ نرجعه false عند دخول الرينج من جديد
+            hasInteracted = false;
+            dialogueIndex = 0;
+            showingDialogue = false;
         }
     }
 
@@ -117,6 +171,18 @@ public class QuestGiver : MonoBehaviour
             playerInRange = false;
             questPanel.SetActive(false);
             hasInteracted = false;
+            dialogueIndex = 0;
+            showingDialogue = false;
+            audioSource.Stop();
+        }
+    }
+
+    void PlayVoice(AudioClip clip)
+    {
+        if (clip != null)
+        {
+            audioSource.Stop();
+            audioSource.PlayOneShot(clip);
         }
     }
 }
