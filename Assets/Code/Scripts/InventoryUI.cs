@@ -21,7 +21,7 @@ public class InventoryUI : MonoBehaviour
         // ✅ تحديث الفلوس
         if (moneyText != null)
         {
-            moneyText.text = $"💰 Money: {QuestManager.Instance.playerMoney}";
+            moneyText.text = $"Money: {QuestManager.Instance.playerMoney}";
         }
 
         // ✅ تحديث العناصر
@@ -32,7 +32,7 @@ public class InventoryUI : MonoBehaviour
 
             foreach (var entry in items)
             {
-                sb.AppendLine($"📦 {entry.Key}: {entry.Value}");
+                sb.AppendLine($"{entry.Key}: {entry.Value}");
             }
 
             inventoryText.text = sb.ToString();

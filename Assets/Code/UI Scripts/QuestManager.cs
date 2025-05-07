@@ -9,10 +9,8 @@ public class Quest
     public int requiredAmount;
     public int rewardMoney;
     public bool isCompleted = false;
+    public bool questAccepted = false;
 }
-
-
-
 
 public class QuestManager : MonoBehaviour
 {
@@ -21,6 +19,9 @@ public class QuestManager : MonoBehaviour
     public List<Quest> quests = new List<Quest>();
     public int currentQuestIndex = 0;
     public int playerMoney = 0;
+
+
+
 
     private Dictionary<string, int> collectedItems = new Dictionary<string, int>();
 
@@ -42,7 +43,9 @@ public class QuestManager : MonoBehaviour
     public void MoveToNextQuest()
     {
         if (currentQuestIndex < quests.Count - 1)
+        {
             currentQuestIndex++;
+        }
     }
 
     public void AddItem(string itemName)

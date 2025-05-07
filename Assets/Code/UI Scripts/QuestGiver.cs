@@ -54,7 +54,6 @@ public class QuestGiver : MonoBehaviour
         {
             hasInteracted = true;
 
-            // ✅ عرض الديالوق فقط إذا كانت المهمة الحالية
             if (!questGiven && dialogueLines.Count > 0 && dialogueIndex < dialogueLines.Count
                 && questIndex == QuestManager.Instance.currentQuestIndex)
             {
@@ -73,77 +72,82 @@ public class QuestGiver : MonoBehaviour
                 dialogueIndex++;
 
                 if (dialogueIndex >= dialogueLines.Count)
+                {
                     showingDialogue = false;
+                    Quest currentQuest = QuestManager.Instance.GetCurrentQuest();
+                    QuestManager.Instance.quests[questIndex].questAccepted = true;
+                    questGiven = true;
+
+                    questText.text = $"Collect {currentQuest.requiredAmount} of {currentQuest.requiredItem}.";
+                    PlayVoice(onQuestAcceptedVoice);
+                }
 
                 return;
             }
 
-            Quest currentQuest = QuestManager.Instance.GetCurrentQuest();
+            Quest currentQuestCheck = QuestManager.Instance.GetCurrentQuest();
 
-            // ✅ المهمة قديمة (تم إنهاؤها)
             if (questIndex < QuestManager.Instance.currentQuestIndex)
             {
                 questPanel.SetActive(true);
-                questText.text = "✅ You already completed this quest.";
+                questText.text = "You already completed this quest.";
                 PlayVoice(onQuestAlreadyDoneVoice);
                 return;
             }
 
-            // ❌ لم يتم الوصول لهذه المهمة بعد
             if (questIndex > QuestManager.Instance.currentQuestIndex)
             {
                 questPanel.SetActive(true);
 
                 if (questIndex - 1 >= 0 && questIndex - 1 < QuestManager.Instance.quests.Count)
                 {
-                    questText.text = $"❌ Finish the previous quest: {QuestManager.Instance.quests[questIndex - 1].questName}";
+                    questText.text = $"Finish the previous quest: {QuestManager.Instance.quests[questIndex - 1].questName}";
                 }
                 else
                 {
-                    questText.text = "❌ This quest is not available yet.";
+                    questText.text = "This quest is not available yet.";
                 }
 
                 return;
             }
 
-            // 📜 إعطاء المهمة لأول مرة
             if (!questGiven)
             {
                 questPanel.SetActive(true);
-                questText.text = $"📜 Quest: Collect {currentQuest.requiredAmount} of {currentQuest.requiredItem}.";
+                questText.text = $"Collect {currentQuestCheck.requiredAmount} of {currentQuestCheck.requiredItem}.";
                 questGiven = true;
+                QuestManager.Instance.quests[questIndex].questAccepted = true;
                 PlayVoice(onQuestAcceptedVoice);
                 return;
             }
 
-            // 🔄 متابعة التقدم بالمهمة
-            if (!currentQuest.isCompleted)
+            if (!currentQuestCheck.isCompleted)
             {
-                int collected = QuestManager.Instance.GetCollectedAmount(currentQuest.requiredItem);
-                int remaining = currentQuest.requiredAmount - collected;
+                int collected = QuestManager.Instance.GetCollectedAmount(currentQuestCheck.requiredItem);
+                int remaining = currentQuestCheck.requiredAmount - collected;
 
                 questPanel.SetActive(true);
 
                 if (remaining > 0)
                 {
-                    questText.text = $"📦 You still need {remaining} more {currentQuest.requiredItem}.";
+                    questText.text = $"You still need {remaining} more {currentQuestCheck.requiredItem}.";
                     PlayVoice(onQuestProgressVoice);
                 }
                 else
                 {
-                    currentQuest.isCompleted = true;
-                    QuestManager.Instance.RemoveItem(currentQuest.requiredItem, currentQuest.requiredAmount);
-                    QuestManager.Instance.AddMoney(currentQuest.rewardMoney);
-                    QuestManager.Instance.MoveToNextQuest(); // ✅ هذا اللي يخلي السهم يتحرك للهدف التالي
+                    currentQuestCheck.isCompleted = true;
+                    QuestManager.Instance.RemoveItem(currentQuestCheck.requiredItem, currentQuestCheck.requiredAmount);
+                    QuestManager.Instance.AddMoney(currentQuestCheck.rewardMoney);
+                    QuestManager.Instance.MoveToNextQuest();
 
-                    questText.text = $"✅ Quest completed! You earned {currentQuest.rewardMoney} coins.";
+                    questText.text = $"Quest completed! You earned {currentQuestCheck.rewardMoney} coins.";
                     PlayVoice(onQuestCompletedVoice);
                 }
             }
             else
             {
                 questPanel.SetActive(true);
-                questText.text = "✅ You already completed this quest.";
+                questText.text = "You already completed this quest.";
                 PlayVoice(onQuestAlreadyDoneVoice);
             }
         }
