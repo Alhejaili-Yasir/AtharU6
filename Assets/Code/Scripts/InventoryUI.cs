@@ -4,7 +4,8 @@ using System.Text;
 
 public class InventoryUI : MonoBehaviour
 {
-    public TextMeshProUGUI inventoryText;
+    public TextMeshProUGUI collectedItemsText;
+    public TextMeshProUGUI purchasedItemsText;
     public TextMeshProUGUI moneyText;
     public float updateInterval = 0.5f;
 
@@ -18,24 +19,25 @@ public class InventoryUI : MonoBehaviour
         if (QuestManager.Instance == null)
             return;
 
-        // ✅ تحديث الفلوس
         if (moneyText != null)
-        {
             moneyText.text = $"Money: {QuestManager.Instance.playerMoney}";
-        }
 
-        // ✅ تحديث العناصر
-        if (inventoryText != null)
+        if (collectedItemsText != null)
         {
             var items = QuestManager.Instance.GetAllCollectedItems();
             StringBuilder sb = new StringBuilder();
-
             foreach (var entry in items)
-            {
                 sb.AppendLine($"{entry.Key}: {entry.Value}");
-            }
+            collectedItemsText.text = sb.ToString();
+        }
 
-            inventoryText.text = sb.ToString();
+        if (purchasedItemsText != null)
+        {
+            var items = QuestManager.Instance.GetAllPurchasedItems();
+            StringBuilder sb = new StringBuilder();
+            foreach (var entry in items)
+                sb.AppendLine($"{entry.Key}: {entry.Value}");
+            purchasedItemsText.text = sb.ToString();
         }
     }
 }

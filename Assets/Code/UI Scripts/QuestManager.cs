@@ -20,10 +20,8 @@ public class QuestManager : MonoBehaviour
     public int currentQuestIndex = 0;
     public int playerMoney = 0;
 
-
-
-
     private Dictionary<string, int> collectedItems = new Dictionary<string, int>();
+    private Dictionary<string, int> purchasedItems = new Dictionary<string, int>();
 
     void Awake()
     {
@@ -43,9 +41,7 @@ public class QuestManager : MonoBehaviour
     public void MoveToNextQuest()
     {
         if (currentQuestIndex < quests.Count - 1)
-        {
             currentQuestIndex++;
-        }
     }
 
     public void AddItem(string itemName)
@@ -58,12 +54,30 @@ public class QuestManager : MonoBehaviour
         Debug.Log($"👜 Collected {itemName} (Total: {collectedItems[itemName]})");
     }
 
+    public void AddPurchasedItem(string itemName)
+    {
+        if (purchasedItems.ContainsKey(itemName))
+            purchasedItems[itemName]++;
+        else
+            purchasedItems[itemName] = 1;
+
+        Debug.Log($"🛒 Purchased {itemName} (Total: {purchasedItems[itemName]})");
+    }
+
+    // ✅ دالة مخصصة للشراء
+    public void AddShopItem(string itemName)
+    {
+        AddPurchasedItem(itemName);
+    }
+
+    public Dictionary<string, int> GetAllCollectedItems() => collectedItems;
+    public Dictionary<string, int> GetAllPurchasedItems() => purchasedItems;
+
     public void RemoveItem(string itemName, int amount)
     {
         if (collectedItems.ContainsKey(itemName))
         {
             collectedItems[itemName] -= amount;
-
             if (collectedItems[itemName] <= 0)
                 collectedItems.Remove(itemName);
         }
@@ -80,8 +94,13 @@ public class QuestManager : MonoBehaviour
         Debug.Log($"💰 Money: {playerMoney}");
     }
 
-    public Dictionary<string, int> GetAllCollectedItems()
+    public bool SpendMoney(int amount)
     {
-        return collectedItems;
+        if (playerMoney >= amount)
+        {
+            playerMoney -= amount;
+            return true;
+        }
+        return false;
     }
 }
