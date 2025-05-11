@@ -1,9 +1,12 @@
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 
 public class QuestUITextUpdater : MonoBehaviour
 {
     public TextMeshProUGUI questText;
+    public ArrowTargetController arrow; // ⬅️ اربطه في Inspector
+
+    public Transform zone3_5; // ⬅️ اربطه في Inspector
 
     void Update()
     {
@@ -12,14 +15,29 @@ public class QuestUITextUpdater : MonoBehaviour
 
         Quest current = QuestManager.Instance.GetCurrentQuest();
 
-        if (current != null && current.questAccepted && !current.isCompleted)
+        // ✅ إذا خلصت كل المهام
+        if (current == null)
+        {
+            questText.text = " Congratulations!";
+            return;
+        }
+
+        // ✅ إذا المهمة الحالية لم تكتمل
+        if (current.questAccepted && !current.isCompleted)
         {
             int collected = QuestManager.Instance.GetCollectedAmount(current.requiredItem);
             questText.text = $"Quest: {current.requiredItem} {collected}/{current.requiredAmount}";
+
+            // ✅ إذا السهم يأشر على منطقة 3.5، أطلب منه شراء الدرع
+            if (arrow != null && arrow.GetCurrentTarget() == zone3_5)
+            {
+                questText.text = "Buy the Reflect Shield!!";
+            }
+
+            return;
         }
-        else
-        {
-            questText.text = "Follow the arrow";
-        }
+
+        // ✅ الحالة الافتراضية
+        questText.text = "Follow the arrow";
     }
 }

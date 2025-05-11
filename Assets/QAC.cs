@@ -60,4 +60,10 @@ public class ArrowTargetController : MonoBehaviour
             transform.rotation = Quaternion.Lerp(transform.rotation, rot, Time.deltaTime * rotationSpeed);
         }
     }
+
+    // ✅ الدالة المطلوبة
+    public Transform GetCurrentTarget()
+    {
+        return currentTarget;
+    }
 }

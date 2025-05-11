@@ -6,10 +6,17 @@ public class ShopItemButton : MonoBehaviour
 {
     public string itemName;
     public int price = 50;
-    public bool isUsableItem = false; // ✅ إذا كان false = item للتجميع, true = للاستخدام
+    public bool isUsableItem = false;
 
-    public TextMeshProUGUI targetText; // ✅ يتم تعبئته من الـ Inspector
-    public AudioClip purchaseSound;    // ✅ الصوت الذي يُشغل بعد الشراء
+    public TextMeshProUGUI targetText;
+    public AudioClip purchaseSound;
+
+    [Header("Purchase Limits")]
+    public int maxPurchaseCount = 99; // الحد الأقصى للشراء
+
+    [Header("Toggle Objects on Purchase")]
+    public GameObject[] objectsToActivate;
+    public GameObject[] objectsToDeactivate;
 
     private AudioSource audioSource;
 
@@ -23,6 +30,16 @@ public class ShopItemButton : MonoBehaviour
 
     void BuyItem()
     {
+        int currentCount = isUsableItem
+            ? QuestManager.Instance.GetPurchasedAmount(itemName)
+            : QuestManager.Instance.GetCollectedAmount(itemName);
+
+        if (currentCount >= maxPurchaseCount)
+        {
+            Debug.Log($"❌ Can't buy more than {maxPurchaseCount} of {itemName}");
+            return;
+        }
+
         if (QuestManager.Instance.playerMoney >= price)
         {
             QuestManager.Instance.playerMoney -= price;
@@ -39,6 +56,7 @@ public class ShopItemButton : MonoBehaviour
             }
 
             PlaySound();
+            ToggleObjects();
             UpdateTargetText();
         }
         else
@@ -51,6 +69,19 @@ public class ShopItemButton : MonoBehaviour
     {
         if (purchaseSound != null)
             audioSource.PlayOneShot(purchaseSound);
+    }
+
+    void ToggleObjects()
+    {
+        foreach (var obj in objectsToActivate)
+        {
+            if (obj != null) obj.SetActive(true);
+        }
+
+        foreach (var obj in objectsToDeactivate)
+        {
+            if (obj != null) obj.SetActive(false);
+        }
     }
 
     void UpdateTargetText()

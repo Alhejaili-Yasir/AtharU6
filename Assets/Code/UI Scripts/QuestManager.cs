@@ -10,6 +10,17 @@ public class Quest
     public int rewardMoney;
     public bool isCompleted = false;
     public bool questAccepted = false;
+
+    [Header("Shop Requirements (Optional)")]
+    public string requiredShopItem;
+    public int requiredShopItemAmount;
+
+    [Header("GameObjects Activation")]
+    public List<GameObject> activateOnStart;
+    public List<GameObject> deactivateOnStart;
+
+    public List<GameObject> activateOnComplete;
+    public List<GameObject> deactivateOnComplete;
 }
 
 public class QuestManager : MonoBehaviour
@@ -31,6 +42,11 @@ public class QuestManager : MonoBehaviour
             Destroy(gameObject);
     }
 
+    void Start()
+    {
+        TriggerQuestStartEvents(); // لتفعيل أول مهمة
+    }
+
     public Quest GetCurrentQuest()
     {
         if (currentQuestIndex < quests.Count)
@@ -40,8 +56,35 @@ public class QuestManager : MonoBehaviour
 
     public void MoveToNextQuest()
     {
+        if (currentQuestIndex < quests.Count)
+        {
+            Quest current = quests[currentQuestIndex];
+
+            // 🔁 تفعيل/إلغاء التفعيل بعد إنهاء المهمة
+            foreach (var go in current.activateOnComplete)
+                if (go != null) go.SetActive(true);
+
+            foreach (var go in current.deactivateOnComplete)
+                if (go != null) go.SetActive(false);
+        }
+
         if (currentQuestIndex < quests.Count - 1)
+        {
             currentQuestIndex++;
+            TriggerQuestStartEvents(); // ✅ تفعيل بداية المهمة الجديدة
+        }
+    }
+
+    public void TriggerQuestStartEvents()
+    {
+        Quest current = GetCurrentQuest();
+        if (current == null) return;
+
+        foreach (var go in current.activateOnStart)
+            if (go != null) go.SetActive(true);
+
+        foreach (var go in current.deactivateOnStart)
+            if (go != null) go.SetActive(false);
     }
 
     public void AddItem(string itemName)
@@ -64,10 +107,19 @@ public class QuestManager : MonoBehaviour
         Debug.Log($"🛒 Purchased {itemName} (Total: {purchasedItems[itemName]})");
     }
 
-    // ✅ دالة مخصصة للشراء
     public void AddShopItem(string itemName)
     {
         AddPurchasedItem(itemName);
+    }
+
+    public int GetPurchasedAmount(string itemName)
+    {
+        return purchasedItems.ContainsKey(itemName) ? purchasedItems[itemName] : 0;
+    }
+
+    public bool HasRequiredShopItem(string itemName, int amount)
+    {
+        return purchasedItems.ContainsKey(itemName) && purchasedItems[itemName] >= amount;
     }
 
     public Dictionary<string, int> GetAllCollectedItems() => collectedItems;
