@@ -22,7 +22,7 @@ public class QuestGiver : MonoBehaviour
     public AudioClip onQuestProgressVoice;
     public AudioClip onQuestCompletedVoice;
     public AudioClip onQuestAlreadyDoneVoice;
-    public AudioClip onQuestLockedVoice; // ✅ الصوت الجديد
+    public AudioClip onQuestLockedVoice; // ✅ صوت جديد عند محاولة فتح مهمة قبل وقتها
 
     private AudioSource audioSource;
 
@@ -55,39 +55,46 @@ public class QuestGiver : MonoBehaviour
         {
             hasInteracted = true;
 
-            if (!questGiven && dialogueLines.Count > 0 && dialogueIndex < dialogueLines.Count
-                && questIndex == QuestManager.Instance.currentQuestIndex)
+            Quest currentQuest = QuestManager.Instance.GetCurrentQuest();
+
+            // ✅ عرض الحوار (كل السطور مع الأصوات)
+            if (!questGiven && dialogueLines.Count > 0 && questIndex == QuestManager.Instance.currentQuestIndex)
             {
-                if (!showingDialogue)
-                    showingDialogue = true;
-
-                questPanel.SetActive(true);
-                questText.text = dialogueLines[dialogueIndex];
-
-                if (dialogueIndex < dialogueVoices.Count && dialogueVoices[dialogueIndex] != null)
+                if (dialogueIndex < dialogueLines.Count)
                 {
-                    audioSource.Stop();
-                    audioSource.PlayOneShot(dialogueVoices[dialogueIndex]);
+                    questPanel.SetActive(true);
+                    questText.text = dialogueLines[dialogueIndex];
+
+                    if (dialogueIndex < dialogueVoices.Count && dialogueVoices[dialogueIndex] != null)
+                    {
+                        audioSource.Stop();
+                        audioSource.PlayOneShot(dialogueVoices[dialogueIndex]);
+                    }
+
+                    dialogueIndex++;
+                    showingDialogue = true;
+                    return;
                 }
-
-                dialogueIndex++;
-
-                if (dialogueIndex >= dialogueLines.Count)
+                else if (dialogueIndex == dialogueLines.Count)
+                {
+                    // ✅ بعد الانتهاء من كل السطور، يبدأ المهمة عند الضغط مرة أخرى
+                    dialogueIndex++;
+                    return;
+                }
+                else
                 {
                     showingDialogue = false;
-                    Quest currentQuest = QuestManager.Instance.GetCurrentQuest();
-                    QuestManager.Instance.quests[questIndex].questAccepted = true;
                     questGiven = true;
+                    currentQuest.questAccepted = true;
 
+                    questPanel.SetActive(true);
                     questText.text = $"Collect {currentQuest.requiredAmount} of {currentQuest.requiredItem}.";
                     PlayVoice(onQuestAcceptedVoice);
+                    return;
                 }
-
-                return;
             }
 
-            Quest currentQuestCheck = QuestManager.Instance.GetCurrentQuest();
-
+            // ✅ إذا أنهيت المهمة من قبل
             if (questIndex < QuestManager.Instance.currentQuestIndex)
             {
                 questPanel.SetActive(true);
@@ -96,6 +103,7 @@ public class QuestGiver : MonoBehaviour
                 return;
             }
 
+            // ❌ إذا ماوصلت للمهمة بعد
             if (questIndex > QuestManager.Instance.currentQuestIndex)
             {
                 questPanel.SetActive(true);
@@ -103,47 +111,37 @@ public class QuestGiver : MonoBehaviour
                 if (questIndex - 1 >= 0 && questIndex - 1 < QuestManager.Instance.quests.Count)
                 {
                     questText.text = $"Finish the previous quest: {QuestManager.Instance.quests[questIndex - 1].questName}";
-                    PlayVoice(onQuestLockedVoice); // ✅ تشغيل الصوت
                 }
                 else
                 {
                     questText.text = "This quest is not available yet.";
-                    PlayVoice(onQuestLockedVoice); // ✅ تشغيل الصوت
                 }
 
+                PlayVoice(onQuestLockedVoice);
                 return;
             }
 
-            if (!questGiven)
+            // 📜 متابعة التقدم بالمهمة
+            if (!currentQuest.isCompleted)
             {
-                questPanel.SetActive(true);
-                questText.text = $"Collect {currentQuestCheck.requiredAmount} of {currentQuestCheck.requiredItem}.";
-                questGiven = true;
-                QuestManager.Instance.quests[questIndex].questAccepted = true;
-                PlayVoice(onQuestAcceptedVoice);
-                return;
-            }
-
-            if (!currentQuestCheck.isCompleted)
-            {
-                int collected = QuestManager.Instance.GetCollectedAmount(currentQuestCheck.requiredItem);
-                int remaining = currentQuestCheck.requiredAmount - collected;
+                int collected = QuestManager.Instance.GetCollectedAmount(currentQuest.requiredItem);
+                int remaining = currentQuest.requiredAmount - collected;
 
                 questPanel.SetActive(true);
 
                 if (remaining > 0)
                 {
-                    questText.text = $"You still need {remaining} more {currentQuestCheck.requiredItem}.";
+                    questText.text = $"You still need {remaining} more {currentQuest.requiredItem}.";
                     PlayVoice(onQuestProgressVoice);
                 }
                 else
                 {
-                    currentQuestCheck.isCompleted = true;
-                    QuestManager.Instance.RemoveItem(currentQuestCheck.requiredItem, currentQuestCheck.requiredAmount);
-                    QuestManager.Instance.AddMoney(currentQuestCheck.rewardMoney);
+                    currentQuest.isCompleted = true;
+                    QuestManager.Instance.RemoveItem(currentQuest.requiredItem, currentQuest.requiredAmount);
+                    QuestManager.Instance.AddMoney(currentQuest.rewardMoney);
                     QuestManager.Instance.MoveToNextQuest();
 
-                    questText.text = $"Quest completed! You earned {currentQuestCheck.rewardMoney} coins.";
+                    questText.text = $"Quest completed! You earned {currentQuest.rewardMoney} coins.";
                     PlayVoice(onQuestCompletedVoice);
                 }
             }
