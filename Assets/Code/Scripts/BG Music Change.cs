@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
 
 public class ZoneMusicTrigger : MonoBehaviour
@@ -6,12 +6,13 @@ public class ZoneMusicTrigger : MonoBehaviour
     public AudioSource villageMusic;
     public AudioSource desertMusic;
     public float fadeDuration = 1.5f;
+    public float maxVolume = 0.3f; // ✅ أعلى حد للصوت
 
     private Coroutine currentFade;
 
     void Start()
     {
-        villageMusic.volume = 1f;
+        villageMusic.volume = maxVolume;
         desertMusic.volume = 0f;
         villageMusic.Play();
         desertMusic.Play();
@@ -46,13 +47,13 @@ public class ZoneMusicTrigger : MonoBehaviour
             timer += Time.deltaTime;
             float t = timer / fadeDuration;
 
-            fadeIn.volume = Mathf.Lerp(startIn, 1f, t);
+            fadeIn.volume = Mathf.Lerp(startIn, maxVolume, t);
             fadeOut.volume = Mathf.Lerp(startOut, 0f, t);
 
             yield return null;
         }
 
-        fadeIn.volume = 1f;
+        fadeIn.volume = maxVolume;
         fadeOut.volume = 0f;
     }
 }

@@ -22,6 +22,7 @@ public class QuestGiver : MonoBehaviour
     public AudioClip onQuestProgressVoice;
     public AudioClip onQuestCompletedVoice;
     public AudioClip onQuestAlreadyDoneVoice;
+    public AudioClip onQuestLockedVoice; // ✅ الصوت الجديد
 
     private AudioSource audioSource;
 
@@ -102,10 +103,12 @@ public class QuestGiver : MonoBehaviour
                 if (questIndex - 1 >= 0 && questIndex - 1 < QuestManager.Instance.quests.Count)
                 {
                     questText.text = $"Finish the previous quest: {QuestManager.Instance.quests[questIndex - 1].questName}";
+                    PlayVoice(onQuestLockedVoice); // ✅ تشغيل الصوت
                 }
                 else
                 {
                     questText.text = "This quest is not available yet.";
+                    PlayVoice(onQuestLockedVoice); // ✅ تشغيل الصوت
                 }
 
                 return;
