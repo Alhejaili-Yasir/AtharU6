@@ -6,27 +6,23 @@ public class BigSaluwaAI : MonoBehaviour
 {
     public Animator animator;
     public Transform player;
-    public float detectRange = 25f;
-    public float attackRange = 3f;
-    public float patrolRadius = 12f;
-    public float walkSpeed = 3.5f;
-    public float runSpeed = 6f;
+    public float detectRange = 10f;
+    public float attackRange = 2f;
+    public float walkRadius = 6f;
 
     [Header("Roam Limit")]
-    public Transform roamCenter;       // ✳️ نقطة المركز
-    public float roamLimit = 20f;      // ✳️ الحد الأقصى للخروج
+    public Transform roamCenter;    // المركز
+    public float roamLimit = 12f;   // أقصى مدى للحركة
 
     private NavMeshAgent agent;
-    private Vector3 patrolTarget;
+    private Vector3 walkTarget;
     private bool isAttacking = false;
-    private float patrolCooldown = 0f;
+    private Coroutine roamRoutine;
 
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
-        agent.acceleration = 12f;
-        agent.angularSpeed = 300f;
-        PickNewPatrolTarget();
+        roamRoutine = StartCoroutine(RoamLoop());
     }
 
     void Update()
@@ -41,46 +37,57 @@ public class BigSaluwaAI : MonoBehaviour
                 isAttacking = false;
                 animator.SetBool("isAttacking", false);
             }
-
-            agent.SetDestination(transform.position);
-            animator.SetBool("isWalking", false);
-            animator.SetBool("isRunning", false);
             return;
         }
 
         if (distance <= attackRange)
         {
+            StopRoaming();
             agent.SetDestination(transform.position);
-            animator.SetBool("isWalking", false);
-            animator.SetBool("isRunning", false);
+            SetAnim(false, false, true);
             StartCoroutine(AttackLoop());
         }
         else if (distance <= detectRange)
         {
-            agent.speed = runSpeed;
+            StopRoaming();
             agent.SetDestination(player.position);
-
-            animator.SetBool("isWalking", false);
-            animator.SetBool("isRunning", true);
-            animator.SetBool("isAttacking", false);
+            SetAnim(false, true, false);
         }
         else
         {
-            agent.speed = walkSpeed;
-            patrolCooldown -= Time.deltaTime;
-
-            if (Vector3.Distance(transform.position, patrolTarget) < 1f || patrolCooldown <= 0f)
+            if (roamRoutine == null)
             {
-                PickNewPatrolTarget();
-                patrolCooldown = 3f;
+                roamRoutine = StartCoroutine(RoamLoop());
+            }
+        }
+    }
+
+    IEnumerator RoamLoop()
+    {
+        while (true)
+        {
+            if (isAttacking) yield break;
+
+            PickNewWalkTarget();
+            agent.SetDestination(walkTarget);
+
+            float walkTime = Random.Range(5f, 8f);
+            float walkTimer = 0f;
+
+            while (walkTimer < walkTime)
+            {
+                if (isAttacking || PlayerInRange()) yield break;
+
+                SetAnim(true, false, false);
+                walkTimer += Time.deltaTime;
+                yield return null;
             }
 
-            agent.SetDestination(patrolTarget);
+            agent.SetDestination(transform.position);
+            SetAnim(false, false, false);
 
-            bool isMoving = agent.velocity.magnitude > 0.1f;
-            animator.SetBool("isWalking", isMoving);
-            animator.SetBool("isRunning", false);
-            animator.SetBool("isAttacking", false);
+            float waitTime = Random.Range(1.5f, 2f);
+            yield return new WaitForSeconds(waitTime);
         }
     }
 
@@ -91,52 +98,83 @@ public class BigSaluwaAI : MonoBehaviour
 
         while (true)
         {
-            yield return new WaitForSeconds(1.2f);
+            yield return new WaitForSeconds(1f);
             float distance = Vector3.Distance(transform.position, player.position);
+
             if (distance > attackRange) break;
         }
 
-        animator.SetBool("isAttacking", false);
         isAttacking = false;
+        animator.SetBool("isAttacking", false);
     }
 
-    void PickNewPatrolTarget()
+    void StopRoaming()
+    {
+        if (roamRoutine != null)
+        {
+            StopCoroutine(roamRoutine);
+            roamRoutine = null;
+        }
+    }
+
+    bool PlayerInRange()
+    {
+        return Vector3.Distance(transform.position, player.position) <= detectRange;
+    }
+
+    void PickNewWalkTarget()
     {
         Vector3 center = roamCenter != null ? roamCenter.position : transform.position;
 
-        for (int i = 0; i < 10; i++)
+        float minDistance = walkRadius * 0.7f;
+        int attempts = 0;
+
+        while (attempts < 10)
         {
-            Vector3 randomDir = Random.insideUnitSphere * patrolRadius;
+            Vector3 randomDir = Random.insideUnitSphere * walkRadius;
             randomDir.y = 0;
             Vector3 candidate = center + randomDir;
 
-            if (Vector3.Distance(center, candidate) <= roamLimit)
+            if (Vector3.Distance(center, candidate) <= roamLimit &&
+                Vector3.Distance(transform.position, candidate) >= minDistance)
             {
-                if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 1.5f, NavMesh.AllAreas))
+                NavMeshHit hit;
+                if (NavMesh.SamplePosition(candidate, out hit, 1.5f, NavMesh.AllAreas))
                 {
-                    patrolTarget = hit.position;
+                    walkTarget = hit.position;
                     return;
                 }
             }
+
+            attempts++;
         }
 
-        patrolTarget = transform.position; // fallback
+        walkTarget = transform.position;
+    }
+
+    void SetAnim(bool walk, bool run, bool attack)
+    {
+        bool isMoving = agent.velocity.magnitude > 0.1f;
+
+        animator.SetBool("isWalking", walk && isMoving);
+        animator.SetBool("isRunning", run && isMoving);
+        animator.SetBool("isAttacking", attack);
     }
 
     void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.red;
+        Gizmos.color = Color.green;
         Gizmos.DrawWireSphere(transform.position, attackRange);
 
-        Gizmos.color = Color.cyan;
+        Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(transform.position, detectRange);
 
         Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, patrolRadius);
+        Gizmos.DrawWireSphere(transform.position, walkRadius);
 
         if (roamCenter != null)
         {
-            Gizmos.color = Color.green;
+            Gizmos.color = Color.cyan;
             Gizmos.DrawWireSphere(roamCenter.position, roamLimit);
         }
     }
