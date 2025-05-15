@@ -25,16 +25,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5297552365049442363}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -1.042891}
+  m_LocalScale: {x: 4.3325443, y: 3.4763033, z: 3.476303}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 4760853811896725116}
+  m_Father: {fileID: 1171431832636010140}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 50.257412, y: 67.440216}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3708626631408046776
@@ -165,7 +165,8 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0.3}
   m_LocalScale: {x: 0.23081128, y: 0.2876619, z: 0.2876619}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 6951744873328385704}
   m_Father: {fileID: 4760853811896725116}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -243,7 +244,6 @@ RectTransform:
   m_LocalScale: {x: 0.004176299, y: 0.004176299, z: 0.004176299}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 6951744873328385704}
   - {fileID: 1171431832636010140}
   m_Father: {fileID: 5326116973403119543}
   m_LocalEulerAnglesHint: {x: 0, y: -92.428, z: 0}
@@ -454,6 +454,7 @@ MonoBehaviour:
   itemName: Saluwa leather
   pickupRange: 2
   promptUI: {fileID: 8148042977154288584}
+  pickupSound: {fileID: 8300000, guid: 04a4ee40303825c48af2dca27272fcab, type: 3}
 --- !u!54 &1338360338508507296
 Rigidbody:
   m_ObjectHideFlags: 0

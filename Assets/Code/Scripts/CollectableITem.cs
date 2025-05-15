@@ -5,8 +5,10 @@ public class CollectibleItem : MonoBehaviour
     public string itemName = "Unnamed Item";
     public float pickupRange = 2f;
     public GameObject promptUI; // 👈 UI يظهر فوق العنصر عند الاقتراب
+    public AudioClip pickupSound; // 🔊 صوت الالتقاط
 
     private Transform player;
+    private AudioSource audioSource;
 
     void Start()
     {
@@ -14,6 +16,10 @@ public class CollectibleItem : MonoBehaviour
 
         if (promptUI != null)
             promptUI.SetActive(false);
+
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
     }
 
     void Update()
@@ -29,10 +35,11 @@ public class CollectibleItem : MonoBehaviour
 
             if (Input.GetKeyDown(KeyCode.E))
             {
-                // ✅ أضف العنصر لنظام المهام المدمج مع الإنفنتوري
+                if (pickupSound != null)
+                    AudioSource.PlayClipAtPoint(pickupSound, transform.position);
+
                 QuestManager.Instance.AddItem(itemName);
 
-                // ✅ إزالة العنصر من العالم
                 Destroy(gameObject);
             }
         }

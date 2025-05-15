@@ -9,10 +9,12 @@ public class PlayerDualAttack : MonoBehaviour
     [Header("Q Attack Settings")]
     public GameObject qActiveObject;
     public float qAttackDuration = 0.6f;
+    public AudioSource qSound;
 
     [Header("R Attack Settings")]
     public GameObject rActiveObject;
     public float rAttackDuration = 0.6f;
+    public AudioSource rSound;
 
     void Update()
     {
@@ -23,11 +25,13 @@ public class PlayerDualAttack : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.Q))
             {
+                if (qSound != null) qSound.Play();
                 StartCoroutine(PerformAttack(qActiveObject, qAttackDuration));
             }
 
             if (Input.GetKeyDown(KeyCode.R))
             {
+                if (rSound != null) rSound.Play();
                 StartCoroutine(PerformAttack(rActiveObject, rAttackDuration));
             }
         }

@@ -11,8 +11,15 @@ public class BigSaluwaAI : MonoBehaviour
     public float walkRadius = 6f;
 
     [Header("Roam Limit")]
-    public Transform roamCenter;    // المركز
-    public float roamLimit = 12f;   // أقصى مدى للحركة
+    public Transform roamCenter;
+    public float roamLimit = 12f;
+
+    [Header("Audio")]
+    public AudioSource detectAudio;
+    public AudioSource attackAudio;
+
+    private bool isPlayingDetectAudio = false;
+    private bool isPlayingAttackAudio = false;
 
     private NavMeshAgent agent;
     private Vector3 walkTarget;
@@ -29,11 +36,23 @@ public class BigSaluwaAI : MonoBehaviour
     {
         float distance = Vector3.Distance(transform.position, player.position);
 
+        if (distance <= detectRange && !isPlayingDetectAudio)
+        {
+            detectAudio.Play();
+            isPlayingDetectAudio = true;
+        }
+        else if (distance > detectRange && isPlayingDetectAudio)
+        {
+            detectAudio.Stop();
+            isPlayingDetectAudio = false;
+        }
+
         if (isAttacking)
         {
             if (distance > attackRange)
             {
                 StopCoroutine("AttackLoop");
+                StopAttackAudio();
                 isAttacking = false;
                 animator.SetBool("isAttacking", false);
             }
@@ -96,6 +115,8 @@ public class BigSaluwaAI : MonoBehaviour
         isAttacking = true;
         animator.SetBool("isAttacking", true);
 
+        PlayAttackAudio();
+
         while (true)
         {
             yield return new WaitForSeconds(1f);
@@ -103,6 +124,8 @@ public class BigSaluwaAI : MonoBehaviour
 
             if (distance > attackRange) break;
         }
+
+        StopAttackAudio();
 
         isAttacking = false;
         animator.SetBool("isAttacking", false);
@@ -159,6 +182,24 @@ public class BigSaluwaAI : MonoBehaviour
         animator.SetBool("isWalking", walk && isMoving);
         animator.SetBool("isRunning", run && isMoving);
         animator.SetBool("isAttacking", attack);
+    }
+
+    void PlayAttackAudio()
+    {
+        if (!isPlayingAttackAudio && attackAudio != null)
+        {
+            attackAudio.Play();
+            isPlayingAttackAudio = true;
+        }
+    }
+
+    void StopAttackAudio()
+    {
+        if (isPlayingAttackAudio && attackAudio != null)
+        {
+            attackAudio.Stop();
+            isPlayingAttackAudio = false;
+        }
     }
 
     void OnDrawGizmosSelected()

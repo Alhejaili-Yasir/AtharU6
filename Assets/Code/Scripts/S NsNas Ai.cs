@@ -9,8 +9,13 @@ public class sNassnasAI : MonoBehaviour
     public float detectRange = 8f;
     public float attackRange = 1.8f;
 
+    [Header("Audio")]
+    public AudioSource walkAudio;
+    public AudioSource attackAudio;
+
     private NavMeshAgent agent;
     private bool isAttacking = false;
+    private bool isWalkingSoundPlaying = false;
 
     void Start()
     {
@@ -21,6 +26,24 @@ public class sNassnasAI : MonoBehaviour
     void Update()
     {
         float distance = Vector3.Distance(transform.position, player.position);
+
+        // ✅ صوت المشي يشتغل إذا كان يتحرك (بغض النظر عن الهجوم)
+        if (agent.velocity.magnitude > 0.1f)
+        {
+            if (!isWalkingSoundPlaying && walkAudio != null)
+            {
+                walkAudio.Play();
+                isWalkingSoundPlaying = true;
+            }
+        }
+        else
+        {
+            if (isWalkingSoundPlaying && walkAudio != null)
+            {
+                walkAudio.Stop();
+                isWalkingSoundPlaying = false;
+            }
+        }
 
         if (isAttacking)
         {
@@ -56,6 +79,9 @@ public class sNassnasAI : MonoBehaviour
     {
         isAttacking = true;
         animator.SetBool("isAttacking", true);
+
+        if (attackAudio != null)
+            attackAudio.Play();
 
         while (true)
         {
