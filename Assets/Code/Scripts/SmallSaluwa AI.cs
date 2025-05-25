@@ -1,11 +1,16 @@
 ﻿using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UI;
 using System.Collections;
 
 public class SaluwaAI : MonoBehaviour
 {
+    [Header("Components")]
     public Animator animator;
     public Transform player;
+    public NavMeshAgent agent;
+
+    [Header("Ranges")]
     public float detectRange = 10f;
     public float attackRange = 2f;
     public float walkRadius = 6f;
@@ -18,12 +23,13 @@ public class SaluwaAI : MonoBehaviour
     public AudioSource detectAudio;
     public AudioSource attackAudio;
 
+    [Header("UI")]
+    public Slider attackSlider; // اسحب الـSlider من الـInspector
+
     private bool isPlayingDetectAudio = false;
     private bool isPlayingAttackAudio = false;
-
-    private NavMeshAgent agent;
-    private Vector3 walkTarget;
     private bool isAttacking = false;
+    private Vector3 walkTarget;
     private Coroutine roamRoutine;
 
     void Start()
@@ -36,7 +42,7 @@ public class SaluwaAI : MonoBehaviour
     {
         float distance = Vector3.Distance(transform.position, player.position);
 
-        // Detect audio logic (always plays while in range)
+        // صوت الكشف
         if (distance <= detectRange && !isPlayingDetectAudio)
         {
             detectAudio.Play();
@@ -48,6 +54,7 @@ public class SaluwaAI : MonoBehaviour
             isPlayingDetectAudio = false;
         }
 
+        // إذا في هجمة جارية
         if (isAttacking)
         {
             if (distance > attackRange)
@@ -60,25 +67,26 @@ public class SaluwaAI : MonoBehaviour
             return;
         }
 
+        // بدء هجمة إذا اللاعب قريب
         if (distance <= attackRange)
         {
             StopRoaming();
             agent.SetDestination(transform.position);
-            SetAnim(false, false, true);
+            animator.SetBool("isAttacking", true);
             StartCoroutine(AttackLoop());
         }
+        // مطاردة إذا كشف
         else if (distance <= detectRange)
         {
             StopRoaming();
             agent.SetDestination(player.position);
             SetAnim(false, true, false);
         }
+        // تجوال عشوائي
         else
         {
             if (roamRoutine == null)
-            {
                 roamRoutine = StartCoroutine(RoamLoop());
-            }
         }
     }
 
@@ -106,8 +114,7 @@ public class SaluwaAI : MonoBehaviour
             agent.SetDestination(transform.position);
             SetAnim(false, false, false);
 
-            float waitTime = Random.Range(1.5f, 2f);
-            yield return new WaitForSeconds(waitTime);
+            yield return new WaitForSeconds(Random.Range(1.5f, 2f));
         }
     }
 
@@ -115,19 +122,23 @@ public class SaluwaAI : MonoBehaviour
     {
         isAttacking = true;
         animator.SetBool("isAttacking", true);
-
         PlayAttackAudio();
 
         while (true)
         {
+            // انتظر نهاية دورة الهجوم
             yield return new WaitForSeconds(1f);
-            float distance = Vector3.Distance(transform.position, player.position);
 
-            if (distance > attackRange) break;
+            // نقص من قيمة الـSlider
+            if (attackSlider != null)
+                attackSlider.value = Mathf.Max(attackSlider.minValue, attackSlider.value - 1);
+
+            float distance = Vector3.Distance(transform.position, player.position);
+            if (distance > attackRange)
+                break;
         }
 
         StopAttackAudio();
-
         isAttacking = false;
         animator.SetBool("isAttacking", false);
     }
@@ -149,7 +160,6 @@ public class SaluwaAI : MonoBehaviour
     void PickNewWalkTarget()
     {
         Vector3 center = roamCenter != null ? roamCenter.position : transform.position;
-
         float minDistance = walkRadius * 0.7f;
         int attempts = 0;
 
@@ -162,8 +172,7 @@ public class SaluwaAI : MonoBehaviour
             if (Vector3.Distance(center, candidate) <= roamLimit &&
                 Vector3.Distance(transform.position, candidate) >= minDistance)
             {
-                NavMeshHit hit;
-                if (NavMesh.SamplePosition(candidate, out hit, 1.5f, NavMesh.AllAreas))
+                if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 1.5f, NavMesh.AllAreas))
                 {
                     walkTarget = hit.position;
                     return;
@@ -179,7 +188,6 @@ public class SaluwaAI : MonoBehaviour
     void SetAnim(bool walk, bool run, bool attack)
     {
         bool isMoving = agent.velocity.magnitude > 0.1f;
-
         animator.SetBool("isWalking", walk && isMoving);
         animator.SetBool("isRunning", run && isMoving);
         animator.SetBool("isAttacking", attack);
@@ -207,13 +215,10 @@ public class SaluwaAI : MonoBehaviour
     {
         Gizmos.color = Color.green;
         Gizmos.DrawWireSphere(transform.position, attackRange);
-
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(transform.position, detectRange);
-
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, walkRadius);
-
         if (roamCenter != null)
         {
             Gizmos.color = Color.cyan;

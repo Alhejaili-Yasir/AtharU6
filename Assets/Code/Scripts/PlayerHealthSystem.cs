@@ -1,18 +1,25 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.SceneManagement;
+using System.Collections;
 
 public class PlayerHealth : MonoBehaviour
 {
+    [Header("Health Settings")]
     public int maxHealth = 100;
     public int currentHealth;
 
-    public Slider healthSlider; 
-    public TextMeshProUGUI healthText; 
+    [Header("UI References")]
+    public Slider healthSlider;
+    public TextMeshProUGUI healthText;
+    public GameObject gameOverUI;    // اسحب هنا الـ UI اللي يبغى يصير نشط عند الموت
 
     void Start()
     {
         currentHealth = maxHealth;
+        if (gameOverUI != null)
+            gameOverUI.SetActive(false);    // تأكد إنه مخفي في البداية
         UpdateUI();
     }
 
@@ -48,9 +55,7 @@ public class PlayerHealth : MonoBehaviour
         UpdateUI();
 
         if (currentHealth <= 0)
-        {
             Die();
-        }
     }
 
     public void Heal(int amount)
@@ -65,6 +70,15 @@ public class PlayerHealth : MonoBehaviour
     void Die()
     {
         Debug.Log("اللاعب مات!");
+        if (gameOverUI != null)
+            gameOverUI.SetActive(true);      // فعل الـUI عند الموت
+        StartCoroutine(RestartScene());
+    }
+
+    IEnumerator RestartScene()
+    {
+        yield return new WaitForSeconds(2f);   // انتظر 2 ثواني عشان يشوف اللاعب الـUI
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     void UpdateUI()
@@ -76,8 +90,6 @@ public class PlayerHealth : MonoBehaviour
         }
 
         if (healthText != null)
-        {
             healthText.text = $"Health: {currentHealth}";
-        }
     }
 }

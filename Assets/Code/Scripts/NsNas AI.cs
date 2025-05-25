@@ -1,11 +1,16 @@
 ﻿using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UI;  // ← إضافة هذا لاستيراد Slider
 using System.Collections;
 
 public class NassnasAI : MonoBehaviour
 {
+    [Header("Components")]
     public Animator animator;
     public Transform player;
+    public NavMeshAgent agent;
+
+    [Header("Ranges")]
     public float detectRange = 8f;
     public float attackRange = 1.8f;
 
@@ -13,7 +18,9 @@ public class NassnasAI : MonoBehaviour
     public AudioSource walkAudio;
     public AudioSource attackAudio;
 
-    private NavMeshAgent agent;
+    [Header("UI")]
+    public Slider healthSlider; // اسحب السلايدر من الـInspector
+
     private bool isAttacking = false;
     private bool isWalkingSoundPlaying = false;
 
@@ -27,7 +34,7 @@ public class NassnasAI : MonoBehaviour
     {
         float distance = Vector3.Distance(transform.position, player.position);
 
-        // ✅ صوت المشي يشتغل إذا كان يتحرك (بغض النظر عن الهجوم)
+        // تشغيل/إيقاف صوت المشي حسب الحركة
         if (agent.velocity.magnitude > 0.1f)
         {
             if (!isWalkingSoundPlaying && walkAudio != null)
@@ -45,6 +52,7 @@ public class NassnasAI : MonoBehaviour
             }
         }
 
+        // إذا في هجمة جارية
         if (isAttacking)
         {
             if (distance > attackRange)
@@ -56,20 +64,23 @@ public class NassnasAI : MonoBehaviour
             return;
         }
 
+        // بدء هجمة
         if (distance <= attackRange)
         {
             agent.SetDestination(transform.position); // وقف
             animator.SetBool("isWalking", false);
             StartCoroutine(AttackLoop());
         }
+        // مطاردة اللاعب
         else if (distance <= detectRange)
         {
             agent.SetDestination(player.position);
             animator.SetBool("isWalking", true);
         }
+        // الوقوف إذا بعيد جداً
         else
         {
-            agent.SetDestination(transform.position); // وقف
+            agent.SetDestination(transform.position);
             animator.SetBool("isWalking", false);
             animator.SetBool("isAttacking", false);
         }
@@ -85,9 +96,17 @@ public class NassnasAI : MonoBehaviour
 
         while (true)
         {
+            // انتظار دورة الهجوم
             yield return new WaitForSeconds(1f);
+
+            // نقص 3 من السلايدر في كل ضربة
+            if (healthSlider != null)
+                healthSlider.value = Mathf.Max(healthSlider.minValue, healthSlider.value - 3f);
+
+            // تحقق من المسافة لاستمرار الهجوم
             float distance = Vector3.Distance(transform.position, player.position);
-            if (distance > attackRange) break;
+            if (distance > attackRange)
+                break;
         }
 
         animator.SetBool("isAttacking", false);

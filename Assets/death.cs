@@ -1,0 +1,39 @@
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+using System.Collections;
+
+public class SliderWatcher : MonoBehaviour
+{
+    [Header("References")]
+    public Slider slider;           // «”Õ» Â‰« «·‹ Slider „‰ «·‹ Inspector
+    public GameObject gameOverUI;   // «”Õ» Â‰« «·‹ UI «··Ì  »Ì ÌŸÂ—
+
+    [Header("Settings")]
+    public float displayDuration = 2f; // „œ… ŸÂÊ— «·‹ UI ﬁ»· ≈⁄«œ… «·„‘Âœ
+
+    private bool triggered = false;
+
+    void Start()
+    {
+        if (gameOverUI != null)
+            gameOverUI.SetActive(false);
+    }
+
+    void Update()
+    {
+        if (!triggered && slider != null && slider.value <= slider.minValue)
+        {
+            triggered = true;
+            if (gameOverUI != null)
+                gameOverUI.SetActive(true);
+            StartCoroutine(ShowUIAndRestart());
+        }
+    }
+
+    private IEnumerator ShowUIAndRestart()
+    {
+        yield return new WaitForSeconds(displayDuration);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+}
