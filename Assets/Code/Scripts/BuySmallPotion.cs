@@ -12,7 +12,7 @@ public class ShopItemButton : MonoBehaviour
     public AudioClip purchaseSound;
 
     [Header("Purchase Limits")]
-    public int maxPurchaseCount = 99; // الحد الأقصى للشراء
+    public int maxPurchaseCount = 99;
 
     [Header("Toggle Objects on Purchase")]
     public GameObject[] objectsToActivate;
@@ -31,7 +31,7 @@ public class ShopItemButton : MonoBehaviour
     void BuyItem()
     {
         int currentCount = isUsableItem
-            ? QuestManager.Instance.GetPurchasedAmount(itemName)
+            ? InventorySystem.Instance.GetItemCount(itemName)
             : QuestManager.Instance.GetCollectedAmount(itemName);
 
         if (currentCount >= maxPurchaseCount)
@@ -46,7 +46,7 @@ public class ShopItemButton : MonoBehaviour
 
             if (isUsableItem)
             {
-                QuestManager.Instance.AddShopItem(itemName);
+                InventorySystem.Instance.AddItem(itemName);
                 Debug.Log($"✅ Bought usable item: {itemName}");
             }
             else
@@ -90,7 +90,7 @@ public class ShopItemButton : MonoBehaviour
 
         string display = "";
         var items = isUsableItem
-            ? QuestManager.Instance.GetAllPurchasedItems()
+            ? InventorySystem.Instance.items
             : QuestManager.Instance.GetAllCollectedItems();
 
         foreach (var entry in items)
