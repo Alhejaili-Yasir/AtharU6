@@ -20,7 +20,7 @@ public class InventoryUI : MonoBehaviour
             return;
 
         if (moneyText != null)
-            moneyText.text = $"Money: {QuestManager.Instance.playerMoney}";
+            moneyText.text = $"{QuestManager.Instance.playerMoney}";
 
         if (collectedItemsText != null)
         {
