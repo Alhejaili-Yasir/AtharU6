@@ -20,6 +20,10 @@ public class UnifiedPotionUsage : MonoBehaviour
     public float midPotionValue = 30f;
     public float largePotionValue = 50f;
 
+    [Header("Audio & Particles")]
+    public AudioSource useSound;
+    public ParticleSystem useEffect;
+
     void OnEnable()
     {
         UpdatePotionText();
@@ -39,6 +43,12 @@ public class UnifiedPotionUsage : MonoBehaviour
 
     private void UsePotion(string itemName, float value)
     {
+        if (targetSlider.value >= targetSlider.maxValue)
+        {
+            Debug.Log("⚠️ Slider is already full. Cannot use potion.");
+            return;
+        }
+
         Debug.Log($"Trying to use {itemName}");
 
         if (InventorySystem.Instance.HasItem(itemName))
@@ -46,7 +56,15 @@ public class UnifiedPotionUsage : MonoBehaviour
             Debug.Log($"{itemName} exists in inventory");
 
             InventorySystem.Instance.RemoveItem(itemName);
-            targetSlider.value += value;
+
+            float newValue = Mathf.Min(targetSlider.value + value, targetSlider.maxValue);
+            targetSlider.value = newValue;
+
+            if (useSound != null)
+                useSound.Play();
+
+            if (useEffect != null)
+                useEffect.Play();
 
             Debug.Log($"Increased slider by {value}, new value: {targetSlider.value}");
 
