@@ -95,9 +95,10 @@ public class ThirdPersonController : MonoBehaviour
         }
 
         // Jump animation
-        if (animator != null)
-            animator.SetBool("air", cc.isGrounded == false);
-
+        if (animator != null && !cc.isGrounded)
+            animator.SetBool("air", true);
+        else if (animator != null && cc.isGrounded)
+            animator.SetBool("air", false);
         // Handle can jump or not
         if (inputJump && cc.isGrounded)
         {
