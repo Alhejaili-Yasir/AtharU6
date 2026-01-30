@@ -1,36 +1,55 @@
-﻿
-#if UNITY_EDITOR
-using UnityEditor.VersionControl;
-#endif
-using UnityEngine;
+﻿using UnityEngine;
 
 /*
-    This file has a commented version with details about how each line works. 
-    The commented version contains code that is easier and simpler to read. This file is minified.
+    Improved ThirdPersonController:
+    - Uses a reliable grounded check (SphereCast) instead of cc.isGrounded
+    - Adds LayerMasks for Ground and HeadHit
+    - Prevents "stuck in jump animation" caused by bad CharacterController sizing/center
 */
 
-
-/// <summary>
-/// Main script for third-person movement of the character in the game.
-/// Make sure that the object that will receive this script (the player) 
-/// has the Player tag and the Character Controller component.
-/// </summary>
 public class ThirdPersonController : MonoBehaviour
 {
-
-    [Tooltip("Speed ​​at which the character moves. It is not affected by gravity or jumping.")]
+    [Header("Movement")]
+    [Tooltip("Speed at which the character moves (not affected by gravity or jumping).")]
     public float velocity = 5f;
-    [Tooltip("This value is added to the speed value while the character is sprinting.")]
+
+    [Tooltip("This value is added to speed while sprinting.")]
     public float sprintAdittion = 3.5f;
+
     [Tooltip("The higher the value, the higher the character will jump.")]
     public float jumpForce = 18f;
+
     [Tooltip("Stay in the air. The higher the value, the longer the character floats before falling.")]
     public float jumpTime = 0.85f;
+
     [Space]
-    [Tooltip("Force that pulls the player down. Changing this value causes all movement, jumping and falling to be changed as well.")]
+    [Tooltip("Force that pulls the player down. Changing this affects all movement, jumping and falling.")]
     public float gravity = 9.8f;
 
-    float jumpElapsedTime = 0;
+    [Header("Ground Check (Fix for stuck jump)")]
+    [Tooltip("Which layers count as ground.")]
+    public LayerMask groundMask = ~0;
+
+    [Tooltip("Extra distance below the CharacterController to check for ground.")]
+    public float groundCheckDistance = 0.15f;
+
+    [Tooltip("Sphere radius used for ground check (usually close to controller radius).")]
+    public float groundCheckRadius = 0.25f;
+
+    [Tooltip("Small downward force when grounded to keep character snapped to ground.")]
+    public float groundedStickForce = 2.0f;
+
+    [Header("Head Hit Detect")]
+    [Tooltip("Layers that can stop the jump when hitting the head.")]
+    public LayerMask headHitMask = ~0;
+
+    [Tooltip("Extra multiplier for head hit distance.")]
+    public float headHitDistanceMultiplier = 1.1f;
+
+    [Header("Debug")]
+    public bool showGroundCheckGizmos = true;
+
+    float jumpElapsedTime = 0f;
 
     // Player states
     bool isJumping = false;
@@ -44,160 +63,197 @@ public class ThirdPersonController : MonoBehaviour
     bool inputCrouch;
     bool inputSprint;
 
+    // Components
     Animator animator;
     CharacterController cc;
 
+    // Cached grounded state
+    bool isGrounded;
 
     void Start()
     {
         cc = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
 
-        // Message informing the user that they forgot to add an animator
+        if (cc == null)
+            Debug.LogError("CharacterController missing on player object.");
+
         if (animator == null)
-            Debug.LogWarning("Hey buddy, you don't have the Animator component in your player. Without it, the animations won't work.");
+            Debug.LogWarning("Animator missing on player object. Animations won't work.");
     }
 
-
-    // Update is only being used here to identify keys and trigger animations
     void Update()
     {
+        // Reliable grounded check (do this early each frame)
+        isGrounded = CheckGrounded();
 
-        // Input checkers
+        // Input
         inputHorizontal = Input.GetAxis("Horizontal");
         inputVertical = Input.GetAxis("Vertical");
         inputJump = Input.GetAxis("Jump") == 1f;
         inputSprint = Input.GetAxis("Fire3") == 1f;
-        // Unfortunately GetAxis does not work with GetKeyDown, so inputs must be taken individually
         inputCrouch = Input.GetKeyDown(KeyCode.LeftControl) || Input.GetKeyDown(KeyCode.JoystickButton1);
 
-        // Check if you pressed the crouch input key and change the player's state
         if (inputCrouch)
             isCrouching = !isCrouching;
 
-        // Run and Crouch animation
-        // If dont have animator component, this block wont run
-        if (cc.isGrounded && animator != null)
+        // Animations (only if animator exists)
+        if (animator != null)
         {
-
             // Crouch
-            // Note: The crouch animation does not shrink the character's collider
             animator.SetBool("crouch", isCrouching);
 
-            // Run
+            // Run / Sprint based on controller velocity magnitude
             float minimumSpeed = 0.9f;
-            animator.SetBool("run", cc.velocity.magnitude > minimumSpeed);
+            bool running = cc.velocity.magnitude > minimumSpeed;
+            animator.SetBool("run", running);
 
-            // Sprint
-            isSprinting = cc.velocity.magnitude > minimumSpeed && inputSprint;
+            isSprinting = running && inputSprint;
             animator.SetBool("sprint", isSprinting);
 
+            // Air (jump/fall) state
+            animator.SetBool("air", !isGrounded);
         }
 
-        // Jump animation
-        if (animator != null && !cc.isGrounded)
-            animator.SetBool("air", true);
-        else if (animator != null && cc.isGrounded)
-            animator.SetBool("air", false);
-        // Handle can jump or not
-        if (inputJump && cc.isGrounded)
+        // Jump input
+        if (inputJump && isGrounded)
         {
             isJumping = true;
-            // Disable crounching when jumping
-            //isCrouching = false; 
+            // If you want crouch canceled on jump, uncomment:
+            // isCrouching = false;
         }
 
         HeadHittingDetect();
-
     }
 
-
-    // With the inputs and animations defined, FixedUpdate is responsible for applying movements and actions to the player
-    private void FixedUpdate()
+    // CharacterController movement should be in Update (not FixedUpdate) for best results
+    void UpdateMovement()
     {
+        // Sprinting boost / crouching slowdown
+        float velocityAdittion = 0f;
+        if (isSprinting) velocityAdittion = sprintAdittion;
+        if (isCrouching) velocityAdittion = -(velocity * 0.50f);
 
-        // Sprinting velocity boost or crounching desacelerate
-        float velocityAdittion = 0;
-        if (isSprinting)
-            velocityAdittion = sprintAdittion;
-        if (isCrouching)
-            velocityAdittion = -(velocity * 0.50f); // -50% velocity
+        float moveSpeed = (velocity + velocityAdittion);
 
-        // Direction movement
-        float directionX = inputHorizontal * (velocity + velocityAdittion) * Time.deltaTime;
-        float directionZ = inputVertical * (velocity + velocityAdittion) * Time.deltaTime;
-        float directionY = 0;
+        // Horizontal input movement (local camera-based)
+        float directionX = inputHorizontal * moveSpeed;
+        float directionZ = inputVertical * moveSpeed;
+
+        // Vertical (Y)
+        float directionY = 0f;
 
         // Jump handler
         if (isJumping)
         {
+            directionY = Mathf.SmoothStep(jumpForce, jumpForce * 0.30f, jumpElapsedTime / jumpTime);
 
-            // Apply inertia and smoothness when climbing the jump
-            // It is not necessary when descending, as gravity itself will gradually pulls
-            directionY = Mathf.SmoothStep(jumpForce, jumpForce * 0.30f, jumpElapsedTime / jumpTime) * Time.deltaTime;
-
-            // Jump timer
             jumpElapsedTime += Time.deltaTime;
             if (jumpElapsedTime >= jumpTime)
             {
                 isJumping = false;
-                jumpElapsedTime = 0;
+                jumpElapsedTime = 0f;
             }
         }
 
-        // Add gravity to Y axis
-        directionY = directionY - gravity * Time.deltaTime;
+        // Gravity
+        directionY -= gravity;
 
-
-        // --- Character rotation --- 
-
-        Vector3 forward = Camera.main.transform.forward;
-        Vector3 right = Camera.main.transform.right;
-
-        forward.y = 0;
-        right.y = 0;
-
-        forward.Normalize();
-        right.Normalize();
-
-        // Relate the front with the Z direction (depth) and right with X (lateral movement)
-        forward = forward * directionZ;
-        right = right * directionX;
-
-        if (directionX != 0 || directionZ != 0)
+        // If grounded and not actively jumping, add a small downward force to stay grounded
+        if (isGrounded && !isJumping)
         {
-            float angle = Mathf.Atan2(forward.x + right.x, forward.z + right.z) * Mathf.Rad2Deg;
+            directionY = -groundedStickForce;
+        }
+
+        // Camera relative movement
+        Vector3 camForward = Camera.main ? Camera.main.transform.forward : Vector3.forward;
+        Vector3 camRight = Camera.main ? Camera.main.transform.right : Vector3.right;
+
+        camForward.y = 0f;
+        camRight.y = 0f;
+
+        camForward.Normalize();
+        camRight.Normalize();
+
+        Vector3 horizontalMove = (camForward * directionZ + camRight * directionX);
+
+        // Rotation towards movement direction
+        if (horizontalMove.sqrMagnitude > 0.0001f)
+        {
+            float angle = Mathf.Atan2(horizontalMove.x, horizontalMove.z) * Mathf.Rad2Deg;
             Quaternion rotation = Quaternion.Euler(0, angle, 0);
             transform.rotation = Quaternion.Slerp(transform.rotation, rotation, 0.15f);
         }
 
-        // --- End rotation ---
-
-
-        Vector3 verticalDirection = Vector3.up * directionY;
-        Vector3 horizontalDirection = forward + right;
-
-        Vector3 moviment = verticalDirection + horizontalDirection;
-        cc.Move(moviment);
-
+        // Final movement vector (CharacterController.Move uses meters per second -> multiply by deltaTime)
+        Vector3 movement = (horizontalMove + Vector3.up * directionY) * Time.deltaTime;
+        cc.Move(movement);
     }
 
+    void LateUpdate()
+    {
+        // Do movement here after Update reads inputs and states
+        if (cc != null)
+            UpdateMovement();
+    }
 
-    //This function makes the character end his jump if he hits his head on something
+    bool CheckGrounded()
+    {
+        if (cc == null) return false;
+
+        // Start from controller center in world
+        Vector3 center = transform.TransformPoint(cc.center);
+
+        // We cast from a little above the bottom of the capsule
+        float castStartOffset = (cc.height * 0.5f) - cc.radius;
+        Vector3 castOrigin = center + Vector3.up * 0.02f; // small lift to avoid inside-ground starts
+
+        // Total cast distance to reach ground
+        float castDistance = castStartOffset + groundCheckDistance;
+
+        // SphereCast down
+        bool hit = Physics.SphereCast(
+            castOrigin,
+            Mathf.Max(0.01f, groundCheckRadius),
+            Vector3.down,
+            out RaycastHit hitInfo,
+            castDistance,
+            groundMask,
+            QueryTriggerInteraction.Ignore
+        );
+
+        return hit;
+    }
+
+    // Ends jump if head hits something (with mask and ignoring self)
     void HeadHittingDetect()
     {
-        float headHitDistance = 1.1f;
+        if (cc == null) return;
+
         Vector3 ccCenter = transform.TransformPoint(cc.center);
-        float hitCalc = cc.height / 2f * headHitDistance;
+        float hitCalc = (cc.height / 2f) * headHitDistanceMultiplier;
 
-        // Uncomment this line to see the Ray drawed in your characters head
-        // Debug.DrawRay(ccCenter, Vector3.up * headHeight, Color.red);
-
-        if (Physics.Raycast(ccCenter, Vector3.up, hitCalc))
+        // Raycast up and ignore triggers
+        if (Physics.Raycast(ccCenter, Vector3.up, out RaycastHit hit, hitCalc, headHitMask, QueryTriggerInteraction.Ignore))
         {
-            jumpElapsedTime = 0;
+            // If we hit our own colliders (rare but possible if you have child colliders),
+            // ignore it by checking transform root
+            if (hit.transform.root == transform.root) return;
+
+            jumpElapsedTime = 0f;
             isJumping = false;
         }
     }
 
+    void OnDrawGizmosSelected()
+    {
+        if (!showGroundCheckGizmos) return;
+        if (cc == null) cc = GetComponent<CharacterController>();
+        if (cc == null) return;
+
+        Vector3 center = transform.TransformPoint(cc.center);
+        Vector3 origin = center + Vector3.up * 0.02f;
+
+        Gizmos.DrawWireSphere(origin + Vector3.down * ((cc.height * 0.5f) - cc.radius + groundCheckDistance), groundCheckRadius);
+    }
 }
